@@ -22,6 +22,7 @@ import com.baidu.fsg.uid.worker.entity.WorkerNodeEntity;
 import org.apache.commons.lang.math.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -32,6 +33,7 @@ import javax.annotation.Resource;
  * 
  * @author yutianbao
  */
+@Service
 public class DisposableWorkerIdAssigner implements WorkerIdAssigner {
     private static final Logger LOGGER = LoggerFactory.getLogger(DisposableWorkerIdAssigner.class);
 
@@ -45,6 +47,7 @@ public class DisposableWorkerIdAssigner implements WorkerIdAssigner {
      * 
      * @return assigned worker id
      */
+    @Override
     @Transactional
     public long assignWorkerId() {
         // build worker node entity

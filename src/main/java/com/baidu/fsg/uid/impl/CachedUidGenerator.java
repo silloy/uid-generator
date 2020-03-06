@@ -15,21 +15,23 @@
  */
 package com.baidu.fsg.uid.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.util.Assert;
-
-import com.baidu.fsg.uid.BitsAllocator;
-import com.baidu.fsg.uid.UidGenerator;
+import com.baidu.fsg.uid.buffer.BitsAllocator;
 import com.baidu.fsg.uid.buffer.BufferPaddingExecutor;
 import com.baidu.fsg.uid.buffer.RejectedPutBufferHandler;
 import com.baidu.fsg.uid.buffer.RejectedTakeBufferHandler;
 import com.baidu.fsg.uid.buffer.RingBuffer;
+import com.baidu.fsg.uid.config.GeneratorProperties;
 import com.baidu.fsg.uid.exception.UidGenerateException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.util.Assert;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * Represents a cached implementation of {@link UidGenerator} extends
@@ -48,9 +50,11 @@ import com.baidu.fsg.uid.exception.UidGenerateException;
  * 
  * @author yutianbao
  */
+@Configuration
+@EnableConfigurationProperties(GeneratorProperties.class)
 public class CachedUidGenerator extends DefaultUidGenerator implements DisposableBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(CachedUidGenerator.class);
-    private static final int DEFAULT_BOOST_POWER = 3;
+    public static final int DEFAULT_BOOST_POWER = 3;
 
     /** Spring properties */
     private int boostPower = DEFAULT_BOOST_POWER;
@@ -63,6 +67,15 @@ public class CachedUidGenerator extends DefaultUidGenerator implements Disposabl
     /** RingBuffer */
     private RingBuffer ringBuffer;
     private BufferPaddingExecutor bufferPaddingExecutor;
+
+    public CachedUidGenerator(GeneratorProperties properties) {
+        super(properties);
+        this.boostPower = properties.getBoostPower();
+        this.paddingFactor = properties.getPaddingFactor();
+        this.scheduleInterval  = properties.getScheduleInterval();
+        this.rejectedPutBufferHandler = properties.getRejectedPutBufferHandler();
+        this.rejectedTakeBufferHandler = properties.getRejectedTakeBufferHandler();
+    }
 
     @Override
     public void afterPropertiesSet() throws Exception {

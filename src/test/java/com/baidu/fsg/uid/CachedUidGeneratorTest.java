@@ -1,12 +1,15 @@
 package com.baidu.fsg.uid;
 
 import com.baidu.fsg.uid.impl.CachedUidGenerator;
+import com.baidu.fsg.uid.impl.UidGenerator;
+import com.baidu.fsg.uid.utils.SpringBeanUtil;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -17,24 +20,19 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Test for {@link CachedUidGenerator}
- * 
- * @author yutianbao
- */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { "classpath:uid/cached-uid-spring.xml" })
+
+@RunWith(SpringRunner.class)
+@ActiveProfiles("test")
+@SpringBootTest(classes = UidApplication.class)
 public class CachedUidGeneratorTest {
+
     private static final int SIZE = 7000000; // 700w
     private static final boolean VERBOSE = false;
     private static final int THREADS = Runtime.getRuntime().availableProcessors() << 1;
 
-    @Resource
-    private UidGenerator uidGenerator;
-
     /**
      * Test for serially generate
-     * 
+     *
      * @throws IOException
      */
     @Test
@@ -51,7 +49,7 @@ public class CachedUidGeneratorTest {
 
     /**
      * Test for parallel generate
-     * 
+     *
      * @throws InterruptedException
      * @throws IOException
      */
@@ -86,7 +84,7 @@ public class CachedUidGeneratorTest {
      * Woker run
      */
     private void workerRun(Set<Long> uidSet, AtomicInteger control) {
-        for (;;) {
+        for (; ; ) {
             int myPosition = control.updateAndGet(old -> (old == SIZE ? SIZE : old + 1));
             if (myPosition == SIZE) {
                 return;
@@ -100,6 +98,7 @@ public class CachedUidGeneratorTest {
      * Do generating
      */
     private void doGenerate(Set<Long> uidSet, int index) {
+        UidGenerator uidGenerator = SpringBeanUtil.getBean(CachedUidGenerator.class);
         long uid = uidGenerator.getUID();
         String parsedInfo = uidGenerator.parseUID(uid);
         boolean existed = !uidSet.add(uid);

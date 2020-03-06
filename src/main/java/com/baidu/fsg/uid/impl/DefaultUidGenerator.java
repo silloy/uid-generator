@@ -15,19 +15,22 @@
  */
 package com.baidu.fsg.uid.impl;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
+import com.baidu.fsg.uid.buffer.BitsAllocator;
+import com.baidu.fsg.uid.config.GeneratorProperties;
+import com.baidu.fsg.uid.exception.UidGenerateException;
+import com.baidu.fsg.uid.utils.DateUtils;
+import com.baidu.fsg.uid.worker.WorkerIdAssigner;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-import com.baidu.fsg.uid.BitsAllocator;
-import com.baidu.fsg.uid.UidGenerator;
-import com.baidu.fsg.uid.exception.UidGenerateException;
-import com.baidu.fsg.uid.utils.DateUtils;
-import com.baidu.fsg.uid.worker.WorkerIdAssigner;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
 
 /**
  * Represents an implementation of {@link UidGenerator}
@@ -58,7 +61,10 @@ import com.baidu.fsg.uid.worker.WorkerIdAssigner;
  *
  * @author yutianbao
  */
+@Configuration
+@EnableConfigurationProperties(GeneratorProperties.class)
 public class DefaultUidGenerator implements UidGenerator, InitializingBean {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultUidGenerator.class);
 
     /** Bits allocate */
@@ -79,7 +85,23 @@ public class DefaultUidGenerator implements UidGenerator, InitializingBean {
     protected long lastSecond = -1L;
 
     /** Spring property */
+    @Autowired
     protected WorkerIdAssigner workerIdAssigner;
+
+    private GeneratorProperties properties;
+
+    public DefaultUidGenerator(GeneratorProperties properties) {
+        this.properties = properties;
+        this.timeBits = properties.getTimeBits();
+        this.workerBits = properties.getWorkerBits();
+        this.seqBits = properties.getSeqBits();
+
+        String epochStr = properties.getEpochStr();
+        if (StringUtils.isNotBlank(epochStr)) {
+            this.epochStr = epochStr;
+            this.epochSeconds = TimeUnit.MILLISECONDS.toSeconds(DateUtils.parseByDayPattern(epochStr).getTime());
+        }
+    }
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -182,37 +204,5 @@ public class DefaultUidGenerator implements UidGenerator, InitializingBean {
         }
 
         return currentSecond;
-    }
-
-    /**
-     * Setters for spring property
-     */
-    public void setWorkerIdAssigner(WorkerIdAssigner workerIdAssigner) {
-        this.workerIdAssigner = workerIdAssigner;
-    }
-
-    public void setTimeBits(int timeBits) {
-        if (timeBits > 0) {
-            this.timeBits = timeBits;
-        }
-    }
-
-    public void setWorkerBits(int workerBits) {
-        if (workerBits > 0) {
-            this.workerBits = workerBits;
-        }
-    }
-
-    public void setSeqBits(int seqBits) {
-        if (seqBits > 0) {
-            this.seqBits = seqBits;
-        }
-    }
-
-    public void setEpochStr(String epochStr) {
-        if (StringUtils.isNotBlank(epochStr)) {
-            this.epochStr = epochStr;
-            this.epochSeconds = TimeUnit.MILLISECONDS.toSeconds(DateUtils.parseByDayPattern(epochStr).getTime());
-        }
     }
 }
