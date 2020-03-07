@@ -19,6 +19,8 @@ public class GeneratorProperties {
     Integer seqBits = 13;
     String epochStr = "2016-05-20";
 
+    private Boolean cached = Boolean.FALSE;
+
     /** Spring properties */
     private int boostPower = DEFAULT_BOOST_POWER;
     private int paddingFactor = RingBuffer.DEFAULT_PADDING_PERCENT;
